@@ -12,7 +12,7 @@ interface Project {
   description: string;
   location?: string;
   client?: string;
-  year?: number;
+  project_date?: string;
   image_url?: string;
   category?: string;
 }
@@ -30,7 +30,7 @@ const Projects = () => {
       const { data, error } = await supabase
         .from("projects")
         .select("*")
-        .order("year", { ascending: false });
+        .order("project_date", { ascending: false, nullsFirst: false });
 
       if (error) throw error;
       setProjects(data || []);
@@ -103,10 +103,16 @@ const Projects = () => {
                         <span>{project.client}</span>
                       </div>
                     )}
-                    {project.year && (
+                    {project.project_date && (
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar className="h-4 w-4" />
-                        <span>{project.year}</span>
+                        <span>
+                          {new Date(project.project_date).toLocaleDateString('id-ID', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}
+                        </span>
                       </div>
                     )}
                   </div>

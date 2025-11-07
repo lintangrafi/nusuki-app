@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2, Home } from "lucide-react";
 import AdminServices from "@/components/admin/AdminServices";
 import AdminProjects from "@/components/admin/AdminProjects";
 import logo from "@/assets/logo.png";
@@ -84,10 +84,18 @@ const Admin = () => {
               <p className="text-sm text-muted-foreground">Kelola Layanan & Proyek</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/">
+                <Home className="mr-2 h-4 w-4" />
+                Beranda
+              </Link>
+            </Button>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 

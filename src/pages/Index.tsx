@@ -1,11 +1,60 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Shield, Users, Award } from "lucide-react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import heroImage from "@/assets/hero-image.jpg";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  location?: string;
+  client?: string;
+  project_date?: string;
+  image_url?: string;
+  category?: string;
+}
 
 const Index = () => {
+  const [services, setServices] = useState<string[]>([]);
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    fetchServicesAndProjects();
+  }, []);
+
+  const fetchServicesAndProjects = async () => {
+    try {
+      // Fetch distinct categories as services
+      const { data: categoriesData } = await supabase
+        .from("projects")
+        .select("category")
+        .not("category", "is", null);
+
+      if (categoriesData) {
+        const uniqueCategories = [...new Set(categoriesData.map(p => p.category).filter(Boolean))] as string[];
+        setServices(uniqueCategories);
+      }
+
+      // Fetch recent projects (limit to 6)
+      const { data: projectsData } = await supabase
+        .from("projects")
+        .select("*")
+        .order("project_date", { ascending: false, nullsFirst: false })
+        .limit(6);
+
+      if (projectsData) {
+        setRecentProjects(projectsData);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
   const features = [
     {
       icon: Shield,
@@ -88,6 +137,93 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Services Section */}
+      {services.length > 0 && (
+        <section className="py-20">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Layanan Kami
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Berbagai solusi profesional untuk kebutuhan konstruksi Anda
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-4">
+              {services.map((service, index) => (
+                <Badge 
+                  key={index} 
+                  variant="outline" 
+                  className="text-lg py-2 px-6 hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
+                >
+                  {service}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Recent Projects Section */}
+      {recentProjects.length > 0 && (
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Proyek Terbaru
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Lihat beberapa proyek terbaru yang telah kami selesaikan
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {recentProjects.map((project) => (
+                <Card key={project.id} className="overflow-hidden hover:shadow-elegant transition-all duration-300">
+                  {project.image_url && (
+                    <div className="aspect-video overflow-hidden">
+                      <img 
+                        src={project.image_url} 
+                        alt={project.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+                  <CardContent className="pt-6">
+                    {project.category && (
+                      <Badge variant="secondary" className="mb-2">{project.category}</Badge>
+                    )}
+                    <h3 className="font-bold text-lg mb-2">{project.title}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                      {project.description}
+                    </p>
+                    {project.location && (
+                      <p className="text-xs text-muted-foreground">📍 {project.location}</p>
+                    )}
+                    {project.project_date && (
+                      <p className="text-xs text-muted-foreground">
+                        📅 {new Date(project.project_date).toLocaleDateString('id-ID', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="text-center">
+              <Button variant="outline" size="lg" asChild>
+                <Link to="/projects">Lihat Semua Proyek</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CTA Section */}
       <section className="py-20">

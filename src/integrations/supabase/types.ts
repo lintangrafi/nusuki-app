@@ -23,9 +23,9 @@ export type Database = {
           id: string
           image_url: string | null
           location: string | null
+          project_date: string | null
           title: string
           updated_at: string
-          year: number | null
         }
         Insert: {
           category?: string | null
@@ -35,9 +35,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           location?: string | null
+          project_date?: string | null
           title: string
           updated_at?: string
-          year?: number | null
         }
         Update: {
           category?: string | null
@@ -47,9 +47,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           location?: string | null
+          project_date?: string | null
           title?: string
           updated_at?: string
-          year?: number | null
         }
         Relationships: []
       }

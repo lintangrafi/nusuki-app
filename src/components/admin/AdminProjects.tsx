@@ -7,8 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 interface Project {
   id: string;
@@ -16,7 +21,7 @@ interface Project {
   description: string;
   location?: string;
   client?: string;
-  year?: number;
+  project_date?: string;
   image_url?: string;
   category?: string;
 }
@@ -26,12 +31,13 @@ const AdminProjects = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     location: "",
     client: "",
-    year: new Date().getFullYear(),
+    project_date: undefined as Date | undefined,
     image_url: "",
     category: "",
   });
@@ -45,7 +51,7 @@ const AdminProjects = () => {
       const { data, error } = await supabase
         .from("projects")
         .select("*")
-        .order("year", { ascending: false });
+        .order("project_date", { ascending: false, nullsFirst: false });
 
       if (error) throw error;
       setProjects(data || []);
@@ -57,14 +63,61 @@ const AdminProjects = () => {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("File harus berupa gambar");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Ukuran file maksimal 5MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('project-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('project-images')
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, image_url: publicUrl });
+      toast.success("Gambar berhasil diupload");
+    } catch (error: any) {
+      console.error("Error uploading image:", error);
+      toast.error(error.message || "Gagal mengupload gambar");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
+      const submitData = {
+        ...formData,
+        project_date: formData.project_date ? format(formData.project_date, 'yyyy-MM-dd') : null,
+      };
+
       if (editingProject) {
         const { error } = await supabase
           .from("projects")
-          .update(formData)
+          .update(submitData)
           .eq("id", editingProject.id);
 
         if (error) throw error;
@@ -72,7 +125,7 @@ const AdminProjects = () => {
       } else {
         const { error } = await supabase
           .from("projects")
-          .insert([formData]);
+          .insert([submitData]);
 
         if (error) throw error;
         toast.success("Proyek berhasil ditambahkan");
@@ -112,7 +165,7 @@ const AdminProjects = () => {
       description: project.description,
       location: project.location || "",
       client: project.client || "",
-      year: project.year || new Date().getFullYear(),
+      project_date: project.project_date ? new Date(project.project_date) : undefined,
       image_url: project.image_url || "",
       category: project.category || "",
     });
@@ -125,7 +178,7 @@ const AdminProjects = () => {
       description: "",
       location: "",
       client: "",
-      year: new Date().getFullYear(),
+      project_date: undefined,
       image_url: "",
       category: "",
     });
@@ -200,15 +253,33 @@ const AdminProjects = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="year">Tahun</Label>
-                  <Input
-                    id="year"
-                    type="number"
-                    value={formData.year}
-                    onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
-                    min="1900"
-                    max={new Date().getFullYear() + 10}
-                  />
+                  <Label htmlFor="project_date">Tanggal Proyek</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !formData.project_date && "text-muted-foreground"
+                        )}
+                      >
+                        {formData.project_date ? (
+                          format(formData.project_date, "d MMMM yyyy", { locale: idLocale })
+                        ) : (
+                          <span>Pilih tanggal</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.project_date}
+                        onSelect={(date) => setFormData({ ...formData, project_date: date })}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="category">Kategori</Label>
@@ -221,14 +292,26 @@ const AdminProjects = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="image_url">URL Gambar</Label>
-                <Input
-                  id="image_url"
-                  type="url"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                />
+                <Label>Gambar Proyek</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="flex-1"
+                  />
+                  {uploading && <Loader2 className="h-4 w-4 animate-spin" />}
+                </div>
+                {formData.image_url && (
+                  <div className="mt-2">
+                    <img 
+                      src={formData.image_url} 
+                      alt="Preview" 
+                      className="w-full h-40 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
               </div>
               <Button type="submit" className="w-full">
                 {editingProject ? "Perbarui" : "Simpan"}
@@ -289,8 +372,14 @@ const AdminProjects = () => {
                 {project.client && (
                   <p className="text-xs text-muted-foreground">👤 {project.client}</p>
                 )}
-                {project.year && (
-                  <p className="text-xs text-muted-foreground">📅 {project.year}</p>
+                {project.project_date && (
+                  <p className="text-xs text-muted-foreground">
+                    📅 {new Date(project.project_date).toLocaleDateString('id-ID', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
                 )}
               </CardContent>
             </Card>
