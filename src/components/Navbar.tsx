@@ -24,7 +24,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center transition-transform hover:scale-105">
-            <img src={logo} alt="Nusuki Mega Utama" className="h-12 w-auto" />
+            <img src={logo} alt="Nusuki Mega Utama" className="h-20 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -42,6 +42,9 @@ const Navbar = () => {
                 {item.name}
               </Link>
             ))}
+            <Link to="/admin/login">
+              <Button variant="outline" size="sm">Login Admin</Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}

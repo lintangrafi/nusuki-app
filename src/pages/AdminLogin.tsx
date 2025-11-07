@@ -13,6 +13,7 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,38 +36,59 @@ const AdminLogin = () => {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      if (isRegistering) {
+        // Register new user
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`
+          }
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (data.user) {
-        // Check if user is admin
-        const { data: roles, error: roleError } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .single();
+        toast.success("Registrasi berhasil! Anda terdaftar sebagai guest. Hubungi admin untuk upgrade ke admin.");
+        
+        // Redirect to home page after successful registration
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      } else {
+        // Login existing user
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-        if (roleError || !roles || roles.role !== "admin") {
-          await supabase.auth.signOut();
-          toast.error("Anda tidak memiliki akses admin");
-          return;
+        if (error) throw error;
+
+        if (data.user) {
+          // Check if user is admin
+          const { data: roles, error: roleError } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", data.user.id)
+            .single();
+
+          if (roleError || !roles || roles.role !== "admin") {
+            await supabase.auth.signOut();
+            toast.error("Anda tidak memiliki akses admin");
+            return;
+          }
+
+          toast.success("Login berhasil!");
+          navigate("/admin");
         }
-
-        toast.success("Login berhasil!");
-        navigate("/admin");
       }
     } catch (error: any) {
-      console.error("Login error:", error);
-      toast.error(error.message || "Login gagal");
+      console.error("Auth error:", error);
+      toast.error(error.message || (isRegistering ? "Registrasi gagal" : "Login gagal"));
     } finally {
       setLoading(false);
     }
@@ -77,13 +99,18 @@ const AdminLogin = () => {
       <Card className="w-full max-w-md border-none shadow-elegant">
         <CardHeader className="text-center">
           <img src={logo} alt="Nusuki Mega Utama" className="h-16 w-auto mx-auto mb-4" />
-          <CardTitle className="text-2xl">Admin Login</CardTitle>
+          <CardTitle className="text-2xl">
+            {isRegistering ? "Register" : "Admin Login"}
+          </CardTitle>
           <CardDescription>
-            Masuk untuk mengelola layanan dan proyek
+            {isRegistering 
+              ? "Daftar akun baru sebagai guest"
+              : "Masuk untuk mengelola layanan dan proyek"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -119,9 +146,22 @@ const AdminLogin = () => {
                   Memproses...
                 </>
               ) : (
-                "Login"
+                isRegistering ? "Register" : "Login"
               )}
             </Button>
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={() => setIsRegistering(!isRegistering)}
+                className="text-sm text-primary hover:underline"
+                disabled={loading}
+              >
+                {isRegistering 
+                  ? "Sudah punya akun? Login di sini"
+                  : "Belum punya akun? Register di sini"
+                }
+              </button>
+            </div>
           </form>
         </CardContent>
       </Card>
