@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, MapPin, User, Calendar } from "lucide-react";
+import { Loader2, MapPin, User, Calendar, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 interface Project {
@@ -69,13 +71,13 @@ const Projects = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
-              <Card key={project.id} className="border-none shadow-card hover:shadow-elegant transition-all duration-300 overflow-hidden">
+              <Card key={project.id} className="border-none shadow-card hover:shadow-elegant transition-all duration-300 overflow-hidden group">
                 {project.image_url && (
                   <div className="aspect-video overflow-hidden">
                     <img 
                       src={project.image_url} 
                       alt={project.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                 )}
@@ -88,7 +90,7 @@ const Projects = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <p className="text-muted-foreground">{project.description}</p>
+                  <p className="text-muted-foreground line-clamp-2">{project.description}</p>
                   
                   <div className="space-y-2 text-sm">
                     {project.location && (
@@ -116,6 +118,13 @@ const Projects = () => {
                       </div>
                     )}
                   </div>
+
+                  <Link to={`/projects/${project.id}`}>
+                    <Button variant="outline" className="w-full mt-4 group/btn">
+                      Lihat Detail
+                      <ArrowRight className="h-4 w-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}

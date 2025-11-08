@@ -8,6 +8,14 @@ import heroImage from "@/assets/hero-image.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
+interface Service {
+  id: string;
+  title: string;
+  description: string;
+  icon?: string;
+  image_url?: string;
+}
+
 interface Project {
   id: string;
   title: string;
@@ -20,7 +28,7 @@ interface Project {
 }
 
 const Index = () => {
-  const [services, setServices] = useState<string[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
 
   useEffect(() => {
@@ -29,15 +37,15 @@ const Index = () => {
 
   const fetchServicesAndProjects = async () => {
     try {
-      // Fetch distinct categories as services
-      const { data: categoriesData } = await supabase
-        .from("projects")
-        .select("category")
-        .not("category", "is", null);
+      // Fetch services from services table
+      const { data: servicesData } = await supabase
+        .from("services")
+        .select("*")
+        .order("created_at", { ascending: true })
+        .limit(6);
 
-      if (categoriesData) {
-        const uniqueCategories = [...new Set(categoriesData.map(p => p.category).filter(Boolean))] as string[];
-        setServices(uniqueCategories);
+      if (servicesData) {
+        setServices(servicesData);
       }
 
       // Fetch recent projects (limit to 6)
@@ -151,15 +159,26 @@ const Index = () => {
               </p>
             </div>
             
-            <div className="flex flex-wrap justify-center gap-4">
-              {services.map((service, index) => (
-                <Badge 
-                  key={index} 
-                  variant="outline" 
-                  className="text-lg py-2 px-6 hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer"
-                >
-                  {service}
-                </Badge>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {services.map((service) => (
+                <Card key={service.id} className="border-none shadow-card hover:shadow-elegant transition-all duration-300">
+                  {service.image_url && (
+                    <div className="aspect-video overflow-hidden rounded-t-lg">
+                      <img 
+                        src={service.image_url} 
+                        alt={service.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <CardContent className="pt-6">
+                    {service.icon && (
+                      <span className="text-4xl mb-3 block">{service.icon}</span>
+                    )}
+                    <h3 className="font-bold text-xl mb-2">{service.title}</h3>
+                    <p className="text-muted-foreground">{service.description}</p>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
