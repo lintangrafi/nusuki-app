@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, MapPin, User, Calendar, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import SEO from "@/components/SEO";
+import { pageMetadata, siteConfig } from "@/utils/seoConfig";
+import { breadcrumbSchema } from "@/utils/structuredData";
 
 interface Project {
   id: string;
@@ -22,6 +25,16 @@ interface Project {
 const Projects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      breadcrumbSchema([
+        { name: "Home", url: "/" },
+        { name: "Portfolio", url: "/projects" }
+      ])
+    ]
+  };
 
   useEffect(() => {
     fetchProjects();
@@ -47,6 +60,13 @@ const Projects = () => {
   if (loading) {
     return (
       <Layout>
+        <SEO 
+          title={pageMetadata.projects.title}
+          description={pageMetadata.projects.description}
+          keywords={pageMetadata.projects.keywords}
+          canonical={`${siteConfig.url}/projects`}
+          structuredData={structuredData}
+        />
         <div className="container mx-auto px-4 py-16 flex items-center justify-center min-h-[60vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -56,6 +76,13 @@ const Projects = () => {
 
   return (
     <Layout>
+      <SEO 
+        title={pageMetadata.projects.title}
+        description={pageMetadata.projects.description}
+        keywords={pageMetadata.projects.keywords}
+        canonical={`${siteConfig.url}/projects`}
+        structuredData={structuredData}
+      />
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Portfolio Proyek</h1>
@@ -76,8 +103,9 @@ const Projects = () => {
                   <div className="aspect-video overflow-hidden">
                     <img 
                       src={project.image_url} 
-                      alt={project.title}
+                      alt={`${project.title} - ${project.location || 'Indonesia'} - Portfolio PT Nusuki Mega Utama`}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
                     />
                   </div>
                 )}

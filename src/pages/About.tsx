@@ -1,10 +1,31 @@
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Target, Eye } from "lucide-react";
+import SEO from "@/components/SEO";
+import { pageMetadata, siteConfig } from "@/utils/seoConfig";
+import { organizationSchema, breadcrumbSchema } from "@/utils/structuredData";
 
 const About = () => {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      organizationSchema,
+      breadcrumbSchema([
+        { name: "Home", url: "/" },
+        { name: "Tentang Kami", url: "/about" }
+      ])
+    ]
+  };
+
   return (
     <Layout>
+      <SEO 
+        title={pageMetadata.about.title}
+        description={pageMetadata.about.description}
+        keywords={pageMetadata.about.keywords}
+        canonical={`${siteConfig.url}/about`}
+        structuredData={structuredData}
+      />
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
           {/* Header */}

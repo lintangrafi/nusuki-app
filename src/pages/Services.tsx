@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import SEO from "@/components/SEO";
+import { pageMetadata, siteConfig } from "@/utils/seoConfig";
+import { serviceSchema, breadcrumbSchema } from "@/utils/structuredData";
 
 interface Service {
   id: string;
@@ -16,6 +19,17 @@ interface Service {
 const Services = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      breadcrumbSchema([
+        { name: "Home", url: "/" },
+        { name: "Layanan", url: "/services" }
+      ]),
+      ...services.map(service => serviceSchema(service))
+    ]
+  };
 
   useEffect(() => {
     fetchServices();
@@ -50,6 +64,13 @@ const Services = () => {
 
   return (
     <Layout>
+      <SEO 
+        title={pageMetadata.services.title}
+        description={pageMetadata.services.description}
+        keywords={pageMetadata.services.keywords}
+        canonical={`${siteConfig.url}/services`}
+        structuredData={structuredData}
+      />
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Layanan Kami</h1>
@@ -70,8 +91,9 @@ const Services = () => {
                   <div className="aspect-video overflow-hidden rounded-t-lg">
                     <img 
                       src={service.image_url} 
-                      alt={service.title}
+                      alt={`${service.title} - Jasa Waterproofing PT Nusuki Mega Utama`}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   </div>
                 )}

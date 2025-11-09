@@ -1,10 +1,31 @@
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Phone, Mail } from "lucide-react";
+import SEO from "@/components/SEO";
+import { pageMetadata, siteConfig } from "@/utils/seoConfig";
+import { localBusinessSchema, breadcrumbSchema } from "@/utils/structuredData";
 
 const Contact = () => {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      ...siteConfig.contact.offices.map(office => localBusinessSchema(office)),
+      breadcrumbSchema([
+        { name: "Home", url: "/" },
+        { name: "Kontak", url: "/contact" }
+      ])
+    ]
+  };
+
   return (
     <Layout>
+      <SEO 
+        title={pageMetadata.contact.title}
+        description={pageMetadata.contact.description}
+        keywords={pageMetadata.contact.keywords}
+        canonical={`${siteConfig.url}/contact`}
+        structuredData={structuredData}
+      />
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">

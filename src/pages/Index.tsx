@@ -7,6 +7,9 @@ import Layout from "@/components/Layout";
 import heroImage from "@/assets/hero-image.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import SEO from "@/components/SEO";
+import { pageMetadata, siteConfig } from "@/utils/seoConfig";
+import { organizationSchema, websiteSchema, breadcrumbSchema } from "@/utils/structuredData";
 
 interface Service {
   id: string;
@@ -86,8 +89,24 @@ const Index = () => {
     },
   ];
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      organizationSchema,
+      websiteSchema,
+      breadcrumbSchema([{ name: "Home", url: "/" }])
+    ]
+  };
+
   return (
     <Layout>
+      <SEO 
+        title={pageMetadata.home.title}
+        description={pageMetadata.home.description}
+        keywords={pageMetadata.home.keywords}
+        canonical={siteConfig.url}
+        structuredData={structuredData}
+      />
       {/* Hero Section */}
       <section className="relative h-[600px] flex items-center justify-center overflow-hidden">
         <div 
@@ -166,8 +185,9 @@ const Index = () => {
                     <div className="aspect-video overflow-hidden rounded-t-lg">
                       <img 
                         src={service.image_url} 
-                        alt={service.title}
+                        alt={`${service.title} - Jasa Waterproofing PT Nusuki Mega Utama`}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     </div>
                   )}
@@ -205,8 +225,9 @@ const Index = () => {
                     <div className="aspect-video overflow-hidden">
                       <img 
                         src={project.image_url} 
-                        alt={project.title}
+                        alt={`${project.title} - ${project.location || 'Indonesia'} - Portfolio PT Nusuki Mega Utama`}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
                       />
                     </div>
                   )}

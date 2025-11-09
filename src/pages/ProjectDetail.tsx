@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, MapPin, User, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import SEO from "@/components/SEO";
+import { siteConfig } from "@/utils/seoConfig";
+import { projectSchema, breadcrumbSchema, imageObjectSchema } from "@/utils/structuredData";
 
 interface Project {
   id: string;
@@ -109,8 +112,42 @@ const ProjectDetail = () => {
     ...images
   ];
 
+  const structuredData = project ? {
+    "@context": "https://schema.org",
+    "@graph": [
+      projectSchema({
+        title: project.title,
+        description: project.description,
+        location: project.location,
+        client: project.client,
+        date: project.project_date,
+        image: project.image_url
+      }),
+      breadcrumbSchema([
+        { name: "Home", url: "/" },
+        { name: "Portfolio", url: "/projects" },
+        { name: project.title, url: `/projects/${project.id}` }
+      ]),
+      ...(project.image_url ? [imageObjectSchema({ 
+        url: project.image_url, 
+        title: project.title,
+        description: `${project.title} - ${project.location || 'Indonesia'}`
+      })] : [])
+    ]
+  } : undefined;
+
   return (
     <Layout>
+      {project && (
+        <SEO 
+          title={`${project.title} - Portfolio PT Nusuki Mega Utama`}
+          description={`${project.description.substring(0, 150)}... Proyek ${project.category || 'waterproofing'} di ${project.location || 'Indonesia'}`}
+          keywords={`${project.category || 'waterproofing'}, ${project.location || 'indonesia'}, portfolio, proyek injection`}
+          canonical={`${siteConfig.url}/projects/${id}`}
+          ogImage={project.image_url}
+          structuredData={structuredData}
+        />
+      )}
       <div className="container mx-auto px-4 py-16">
         <Link to="/projects">
           <Button variant="outline" className="mb-6">
@@ -127,7 +164,7 @@ const ProjectDetail = () => {
               <div className="aspect-video overflow-hidden rounded-lg border border-border">
                 <img
                   src={selectedImage}
-                  alt={project.title}
+                  alt={`${project.title} - ${project.location || 'Indonesia'} - Portfolio Waterproofing PT Nusuki Mega Utama`}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -148,8 +185,9 @@ const ProjectDetail = () => {
                   >
                     <img
                       src={img.image_url}
-                      alt={`${project.title} - ${img.display_order + 1}`}
+                      alt={`${project.title} - ${project.location || 'Indonesia'} - Foto ${img.display_order + 1}`}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   </button>
                 ))}
